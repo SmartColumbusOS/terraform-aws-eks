@@ -40,13 +40,15 @@ output "kubeconfig" {
 }
 
 output "workers_asg_arns" {
-  description = "IDs of the autoscaling groups containing workers."
-  value       = "${aws_autoscaling_group.workers.*.arn}"
+#   description = "IDs of the autoscaling groups containing workers."
+#   value       = "${aws_autoscaling_group.workers.*.arn}"
+  description = "IDs of the autoscaling groups containing workers. (FIXME - Not currently supported.)"
+  value       = "FIXME"
 }
 
 output "workers_asg_names" {
   description = "Names of the autoscaling groups containing workers."
-  value       = "${aws_autoscaling_group.workers.*.id}"
+  value       = "${aws_cloudformation_stack.workers.*.outputs["AutoScalingGroupName"]}"
 }
 
 output "worker_security_group_id" {
