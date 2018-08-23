@@ -1,23 +1,35 @@
-resource "aws_autoscaling_group" "workers" {
-  name_prefix          = "${aws_eks_cluster.this.name}-${lookup(var.worker_groups[count.index], "name", count.index)}"
-  desired_capacity     = "${lookup(var.worker_groups[count.index], "asg_desired_capacity", lookup(var.workers_group_defaults, "asg_desired_capacity"))}"
-  max_size             = "${lookup(var.worker_groups[count.index], "asg_max_size",lookup(var.workers_group_defaults, "asg_max_size"))}"
-  min_size             = "${lookup(var.worker_groups[count.index], "asg_min_size",lookup(var.workers_group_defaults, "asg_min_size"))}"
-  launch_configuration = "${element(aws_launch_configuration.workers.*.id, count.index)}"
-  vpc_zone_identifier  = ["${split(",", coalesce(lookup(var.worker_groups[count.index], "subnets", ""), join(",", var.subnets)))}"]
-  count                = "${var.worker_group_count}"
-
-  tags = ["${concat(
-    list(
-      map("key", "Name", "value", "${aws_eks_cluster.this.name}-${lookup(var.worker_groups[count.index], "name", count.index)}-eks_asg", "propagate_at_launch", true),
-      map("key", "kubernetes.io/cluster/${aws_eks_cluster.this.name}", "value", "owned", "propagate_at_launch", true),
-    ),
-    local.asg_tags)
-  }"]
-
-  lifecycle {
-    ignore_changes = ["desired_capacity"]
-  }
+resource "aws_cloudformation_stack" "workers" {
+  count         = "${var.worker_group_count}"
+  name          = "${replace("${aws_eks_cluster.this.name}-${lookup(var.worker_groups[count.index], "name", count.index)}", "/[^-a-zA-Z0-9]/", "-")}"
+  template_body = <<EOF
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Terraform-managed CF Stack for Auto-Scaling Group
+Resources:
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: ${aws_eks_cluster.this.name}-${lookup(var.worker_groups[count.index], "name", count.index)}
+      VPCZoneIdentifier: ${jsonencode(split(",", coalesce(lookup(var.worker_groups[count.index], "subnets", ""), join(",", var.subnets))))}
+      LaunchConfigurationName: ${element(aws_launch_configuration.workers.*.id, count.index)}
+      MinSize: ${lookup(var.worker_groups[count.index], "asg_min_size",lookup(var.workers_group_defaults, "asg_min_size"))}
+      MaxSize: ${lookup(var.worker_groups[count.index], "asg_max_size",lookup(var.workers_group_defaults, "asg_max_size"))}
+      DesiredCapacity: ${lookup(var.worker_groups[count.index], "asg_desired_capacity", lookup(var.workers_group_defaults, "asg_desired_capacity"))}
+      Tags: ${jsonencode(concat(
+        list(
+          map("Key", "Name", "Value", "${aws_eks_cluster.this.name}-${lookup(var.worker_groups[count.index], "name", count.index)}-eks_asg", "PropagateAtLaunch", true),
+          map("Key", "kubernetes.io/cluster/${aws_eks_cluster.this.name}", "Value", "owned", "PropagateAtLaunch", "True"),
+        ),
+        local.asg_tags))}
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MaxBatchSize: 1
+        MinInstancesInService: ${lookup(var.worker_groups[count.index], "asg_max_size",lookup(var.workers_group_defaults, "asg_max_size")) - 1}
+Outputs:
+  AutoScalingGroupName:
+    Description: The name of the Auto-Scaling Group
+    Value: !Ref AutoScalingGroup
+EOF
 }
 
 resource "aws_launch_configuration" "workers" {
@@ -117,8 +129,8 @@ resource "null_resource" "tags_as_list_of_maps" {
   count = "${length(keys(var.tags))}"
 
   triggers = "${map(
-    "key", "${element(keys(var.tags), count.index)}",
-    "value", "${element(values(var.tags), count.index)}",
-    "propagate_at_launch", "true"
+    "Key", "${element(keys(var.tags), count.index)}",
+    "Value", "${element(values(var.tags), count.index)}",
+    "PropagateAtLaunch", "True"
   )}"
 }
