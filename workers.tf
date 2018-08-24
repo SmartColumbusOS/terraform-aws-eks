@@ -14,7 +14,6 @@ Resources:
       LaunchConfigurationName: ${element(aws_launch_configuration.workers.*.id, count.index)}
       MinSize: ${lookup(var.worker_groups[count.index], "asg_min_size",lookup(var.workers_group_defaults, "asg_min_size"))}
       MaxSize: ${lookup(var.worker_groups[count.index], "asg_max_size",lookup(var.workers_group_defaults, "asg_max_size"))}
-      # DesiredCapacity: ${lookup(var.worker_groups[count.index], "asg_desired_capacity", lookup(var.workers_group_defaults, "asg_desired_capacity"))}
       Tags: ${jsonencode(concat(
         list(
           map("Key", "Name", "Value", "${aws_eks_cluster.this.name}-${lookup(var.worker_groups[count.index], "name", count.index)}-eks_asg", "PropagateAtLaunch", "True"),
