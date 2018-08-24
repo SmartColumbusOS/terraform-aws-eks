@@ -17,7 +17,7 @@ Resources:
       DesiredCapacity: ${lookup(var.worker_groups[count.index], "asg_desired_capacity", lookup(var.workers_group_defaults, "asg_desired_capacity"))}
       Tags: ${jsonencode(concat(
         list(
-          map("Key", "Name", "Value", "${aws_eks_cluster.this.name}-${lookup(var.worker_groups[count.index], "name", count.index)}-eks_asg", "PropagateAtLaunch", true),
+          map("Key", "Name", "Value", "${aws_eks_cluster.this.name}-${lookup(var.worker_groups[count.index], "name", count.index)}-eks_asg", "PropagateAtLaunch", "True"),
           map("Key", "kubernetes.io/cluster/${aws_eks_cluster.this.name}", "Value", "owned", "PropagateAtLaunch", "True"),
         ),
         local.asg_tags))}
@@ -30,6 +30,11 @@ Outputs:
     Description: The name of the Auto-Scaling Group
     Value: !Ref AutoScalingGroup
 EOF
+}
+
+data "template_file" "workers_names" {
+  count    = "${var.worker_group_count}"
+  template = "${lookup(aws_cloudformation_stack.workers.*.outputs[count.index], "AutoScalingGroupName")}"
 }
 
 resource "aws_launch_configuration" "workers" {
