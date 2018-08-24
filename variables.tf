@@ -82,9 +82,10 @@ variable "workers_group_defaults" {
   default = {
     name                 = "count.index" # Name of the worker group. Literal count.index will never be used but if name is not set, the count.index interpolation will be used.
     ami_id               = ""            # AMI ID for the eks workers. If none is provided, Terraform will search for the latest version of their EKS optimized worker AMI.
-    asg_desired_capacity = "1"           # Desired worker capacity in the autoscaling group.
     asg_max_size         = "3"           # Maximum worker capacity in the autoscaling group.
-    asg_min_size         = "1"           # Minimum worker capacity in the autoscaling group.
+    asg_min_size         = "1"           # Minimum worker capacity in the autoscaling group. (Also sets desired capacity on initial deployment.)
+    asg_rolling_update_max_batch_size = "1" # Specifies the maximum number of instances that will be updated at once during an autoscaling group rolling update.
+    asg_rolling_update_min_instances_in_service = "0" # Specifies the minimum number of instances that must be in service within the autoscaling group during a rolling update.
     instance_type        = "m4.large"    # Size of the workers instances.
     spot_price           = ""            # Cost of spot instance.
     root_volume_size     = "100"         # root volume size of workers instances.

@@ -39,13 +39,6 @@ output "kubeconfig" {
   value       = "${data.template_file.kubeconfig.rendered}"
 }
 
-output "workers_asg_arns" {
-#   description = "IDs of the autoscaling groups containing workers."
-#   value       = "${aws_autoscaling_group.workers.*.arn}"
-  description = "IDs of the autoscaling groups containing workers. (FIXME - Not currently supported.)"
-  value       = "FIXME"
-}
-
 output "workers_asg_names" {
   description = "Names of the autoscaling groups containing workers."
   value       = [

@@ -14,7 +14,7 @@ Resources:
       LaunchConfigurationName: ${element(aws_launch_configuration.workers.*.id, count.index)}
       MinSize: ${lookup(var.worker_groups[count.index], "asg_min_size",lookup(var.workers_group_defaults, "asg_min_size"))}
       MaxSize: ${lookup(var.worker_groups[count.index], "asg_max_size",lookup(var.workers_group_defaults, "asg_max_size"))}
-      DesiredCapacity: ${lookup(var.worker_groups[count.index], "asg_desired_capacity", lookup(var.workers_group_defaults, "asg_desired_capacity"))}
+      # DesiredCapacity: ${lookup(var.worker_groups[count.index], "asg_desired_capacity", lookup(var.workers_group_defaults, "asg_desired_capacity"))}
       Tags: ${jsonencode(concat(
         list(
           map("Key", "Name", "Value", "${aws_eks_cluster.this.name}-${lookup(var.worker_groups[count.index], "name", count.index)}-eks_asg", "PropagateAtLaunch", "True"),
@@ -23,8 +23,14 @@ Resources:
         local.asg_tags))}
     UpdatePolicy:
       AutoScalingRollingUpdate:
-        MaxBatchSize: 1
-        MinInstancesInService: ${lookup(var.worker_groups[count.index], "asg_max_size",lookup(var.workers_group_defaults, "asg_max_size")) - 1}
+        MaxBatchSize: ${lookup(var.worker_groups[count.index], "asg_rolling_update_max_batch_size",lookup(var.workers_group_defaults, "asg_rolling_update_max_batch_size"))}
+        MinInstancesInService: ${lookup(var.worker_groups[count.index], "asg_rolling_update_min_instances_in_service",lookup(var.workers_group_defaults, "asg_rolling_update_min_instances_in_service"))}
+        SuspendProcesses:
+          - HealthCheck
+          - ReplaceUnhealthy
+          - AZRebalance
+          - AlarmNotification
+          - ScheduledActions
 Outputs:
   AutoScalingGroupName:
     Description: The name of the Auto-Scaling Group
