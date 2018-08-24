@@ -48,7 +48,9 @@ output "workers_asg_arns" {
 
 output "workers_asg_names" {
   description = "Names of the autoscaling groups containing workers."
-  value       = "${aws_cloudformation_stack.workers.*.outputs["AutoScalingGroupName"]}"
+  value       = [
+    "${data.template_file.workers_names.*.rendered}"
+  ]
 }
 
 output "worker_security_group_id" {
