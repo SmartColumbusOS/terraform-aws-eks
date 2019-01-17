@@ -5,16 +5,79 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this
 project adheres to [Semantic Versioning](http://semver.org/).
 
-## [[v1.7.0](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v1.6.0...HEAD)] - 2018-09-??]
+### Next release
+
+#### [[v2.2.0?](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v2.1.0...HEAD)] - 2019-02-??]
+
+##### Added
+
+- Write your awesome addition here (by @you)
+
+##### Changed
+
+- Write your awesome change here (by @you)
+
+# History
+
+## [[v2.1.0](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v2.0.0...v2.1.0)] - 2019-01-15]
 
 ### Added
 
-- A useful addition (slam dunk, @self 🔥)
-- Worker groups can be created with a specified IAM profile. (from @laverya)
+- Initial support for worker groups based on Launch Templates (by @skang0601)
 
 ### Changed
 
-- A subtle but thoughtful change. (Boomshakalaka, @self 🏀)
+- Updated the `update_config_map_aws_auth` resource to trigger when the EKS cluster endpoint changes. This likely means that a new cluster was spun up so our ConfigMap won't exist (fixes #234) (by @elatt)
+- Removed invalid action from worker_autoscaling iam policy (by @marcelloromani)
+- Fixed zsh-specific syntax in retry loop for aws auth config map (by @marcelloromani)
+- Fix: fail deployment if applying the aws auth config map still fails after 10 attempts (by @marcelloromani)
+
+## [[v2.0.0](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v1.8.0...v2.0.0)] - 2018-12-14]
+
+### Added
+
+- (Breaking Change) New input variables `map_accounts_count`, `map_roles_count` and `map_users_count` to allow using computed values as part of `map_accounts`, `map_roles` and `map_users` configs (by @chili-man on behalf of OpenGov).
+- (Breaking Change) New variables `cluster_create_security_group` and `worker_create_security_group` to stop `value of 'count' cannot be computed` error.
+- Added ability to choose local-exec interpreter (by @rothandrew)
+
+### Changed
+
+- Added `--with-aggregate-type-defaults` option to terraform-docs (by @max-rocket-internet)
+- Updated AMI ID filtering to only filter AMIs from current cluster k8s version (by @max-rocket-internet)
+- Added `pre-commit-terraform` git hook to automatically create documentation of inputs/outputs (by @antonbabenko)
+- Travis fixes (by @RothAndrew)
+- Fixed some Windows compatibility issues (by @RothAndrew)
+
+## [[v1.8.0](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v1.7.0...v1.8.0)] - 2018-12-04]
+
+### Added
+
+-  Support for using AWS Launch Templates to define autoscaling groups (by @skang0601)
+- `suspended_processes` to `worker_groups` input (by @bkmeneguello)
+- `target_group_arns` to `worker_groups` input (by @zihaoyu)
+- `force_detach_policies` to `aws_iam_role` `cluster` and `workers` (by @marky-mark)
+- Added sleep while trying to apply the kubernetes configurations if failed, up to 50 seconds (by @rmakram-ims)
+- `cluster_create_security_group` and `worker_create_security_group`. This allows using computed cluster and worker security groups. (by @rmakram-ims)
+
+### Changed
+
+- new variables worker_groups_launch_template and worker_group_count_launch_template (by @skang0601)
+- Remove aws_iam_service_linked_role (by @max-rocket-internet)
+- Adjust the order and correct/update the ec2 instance type info. (@chenrui333)
+- Removed providers from `main.tf`. (by @max-rocket-internet)
+- Removed `configure_kubectl_session` references in documentation [#171](https://github.com/terraform-aws-modules/terraform-aws-eks/pull/171) (by @dominik-k)
+
+## [[v1.7.0](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v1.6.0...v1.7.0)] - 2018-10-09]
+
+### Added
+
+- Worker groups can be created with a specified IAM profile. (from @laverya)
+- exposed `aws_eks_cluster` create and destroy timeouts (by @RGPosadas)
+- exposed `placement_tenancy` for autoscaling group (by @monsterxx03)
+- Allow port 443 from EKS service to nodes to run `metrics-server`. (by @max-rocket-internet)
+
+### Changed
+
 - fix default worker subnets not working (by @erks)
 - fix default worker autoscaling_enabled not working (by @erks)
 - Cosmetic syntax changes to improve readability. (by @max-rocket-internet)

@@ -1,9 +1,9 @@
 terraform {
-  required_version = "= 0.11.7"
+  required_version = ">= 0.11.8"
 }
 
 provider "aws" {
-  version = ">= 1.24.0"
+  version = ">= 1.47.0"
   region  = "${var.region}"
 }
 
@@ -41,15 +41,24 @@ locals {
 
   worker_groups = [
     {
-      instance_type       = "t2.small"
-      additional_userdata = "echo foo bar"
-      subnets             = "${join(",", module.vpc.private_subnets)}"
+      # This will launch an autoscaling group with only On-Demand instances
+      instance_type        = "t2.small"
+      additional_userdata  = "echo foo bar"
+      subnets              = "${join(",", module.vpc.private_subnets)}"
+      asg_desired_capacity = "2"
     },
+  ]
+  worker_groups_launch_template = [
     {
-      instance_type                 = "t2.small"
-      additional_userdata           = "echo foo bar"
-      subnets                       = "${join(",", module.vpc.private_subnets)}"
-      additional_security_group_ids = "${aws_security_group.worker_group_mgmt_one.id},${aws_security_group.worker_group_mgmt_two.id}"
+      # This will launch an autoscaling group with only Spot Fleet instances
+      instance_type                            = "t2.small"
+      additional_userdata                      = "echo foo bar"
+      subnets                                  = "${join(",", module.vpc.private_subnets)}"
+      additional_security_group_ids            = "${aws_security_group.worker_group_mgmt_one.id},${aws_security_group.worker_group_mgmt_two.id}"
+      override_instance_type                   = "t3.small"
+      asg_desired_capacity                     = "2"
+      spot_instance_pools                      = 10
+      on_demand_percentage_above_base_capacity = "0"
     },
   ]
   tags = {
@@ -133,9 +142,14 @@ module "eks" {
   tags                                 = "${local.tags}"
   vpc_id                               = "${module.vpc.vpc_id}"
   worker_groups                        = "${local.worker_groups}"
-  worker_group_count                   = "2"
+  worker_groups_launch_template        = "${local.worker_groups_launch_template}"
+  worker_group_count                   = "1"
+  worker_group_launch_template_count   = "1"
   worker_additional_security_group_ids = ["${aws_security_group.all_worker_mgmt.id}"]
   map_roles                            = "${var.map_roles}"
+  map_roles_count                      = "${var.map_roles_count}"
   map_users                            = "${var.map_users}"
+  map_users_count                      = "${var.map_users_count}"
   map_accounts                         = "${var.map_accounts}"
+  map_accounts_count                   = "${var.map_accounts_count}"
 }

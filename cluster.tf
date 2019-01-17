@@ -8,6 +8,11 @@ resource "aws_eks_cluster" "this" {
     subnet_ids         = ["${var.subnets}"]
   }
 
+  timeouts {
+    create = "${var.cluster_create_timeout}"
+    delete = "${var.cluster_delete_timeout}"
+  }
+
   depends_on = [
     "aws_iam_role_policy_attachment.cluster_AmazonEKSClusterPolicy",
     "aws_iam_role_policy_attachment.cluster_AmazonEKSServicePolicy",
@@ -19,7 +24,7 @@ resource "aws_security_group" "cluster" {
   description = "EKS cluster security group."
   vpc_id      = "${var.vpc_id}"
   tags        = "${merge(var.tags, map("Name", "${var.cluster_name}-eks_cluster_sg"))}"
-  count       = "${var.cluster_security_group_id == "" ? 1 : 0}"
+  count       = "${var.cluster_create_security_group ? 1 : 0}"
 }
 
 resource "aws_security_group_rule" "cluster_egress_internet" {
@@ -30,7 +35,7 @@ resource "aws_security_group_rule" "cluster_egress_internet" {
   from_port         = 0
   to_port           = 0
   type              = "egress"
-  count             = "${var.cluster_security_group_id == "" ? 1 : 0}"
+  count             = "${var.cluster_create_security_group ? 1 : 0}"
 }
 
 resource "aws_security_group_rule" "cluster_https_worker_ingress" {
@@ -41,12 +46,13 @@ resource "aws_security_group_rule" "cluster_https_worker_ingress" {
   from_port                = 443
   to_port                  = 443
   type                     = "ingress"
-  count                    = "${var.cluster_security_group_id == "" ? 1 : 0}"
+  count                    = "${var.cluster_create_security_group ? 1 : 0}"
 }
 
 resource "aws_iam_role" "cluster" {
-  name_prefix        = "${var.cluster_name}"
-  assume_role_policy = "${data.aws_iam_policy_document.cluster_assume_role_policy.json}"
+  name_prefix           = "${var.cluster_name}"
+  assume_role_policy    = "${data.aws_iam_policy_document.cluster_assume_role_policy.json}"
+  force_detach_policies = true
 }
 
 resource "aws_iam_role_policy_attachment" "cluster_AmazonEKSClusterPolicy" {
@@ -57,9 +63,4 @@ resource "aws_iam_role_policy_attachment" "cluster_AmazonEKSClusterPolicy" {
 resource "aws_iam_role_policy_attachment" "cluster_AmazonEKSServicePolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
   role       = "${aws_iam_role.cluster.name}"
-}
-
-resource "aws_iam_service_linked_role" "elasticloadbalancing" {
-  count            = "${var.create_elb_service_linked_role}"
-  aws_service_name = "elasticloadbalancing.amazonaws.com"
 }
