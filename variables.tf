@@ -9,7 +9,7 @@ variable "cluster_security_group_id" {
 
 variable "cluster_version" {
   description = "Kubernetes version to use for the EKS cluster."
-  default     = "1.10"
+  default     = "1.11"
 }
 
 variable "ami_version" {
@@ -18,18 +18,13 @@ variable "ami_version" {
 }
 
 variable "config_output_path" {
-  description = "Determines where config files are placed if using configure_kubectl_session and you want config files to land outside the current working directory. Should end in a forward slash / ."
+  description = "Where to save the Kubectl config file (if `write_kubeconfig = true`). Should end in a forward slash `/` ."
   default     = "./"
 }
 
 variable "write_kubeconfig" {
-  description = "Whether to write a kubeconfig file containing the cluster configuration."
+  description = "Whether to write a Kubectl config file containing the cluster configuration. Saved to `config_output_path`."
   default     = true
-}
-
-variable "create_elb_service_linked_role" {
-  description = "Whether to create the service linked role for the elasticloadbalancing service. Without this EKS cannot create ELBs."
-  default     = false
 }
 
 variable "manage_aws_auth" {
@@ -43,16 +38,34 @@ variable "map_accounts" {
   default     = []
 }
 
+variable "map_accounts_count" {
+  description = "The count of accounts in the map_accounts list."
+  type        = "string"
+  default     = 0
+}
+
 variable "map_roles" {
   description = "Additional IAM roles to add to the aws-auth configmap. See examples/eks_test_fixture/variables.tf for example format."
   type        = "list"
   default     = []
 }
 
+variable "map_roles_count" {
+  description = "The count of roles in the map_roles list."
+  type        = "string"
+  default     = 0
+}
+
 variable "map_users" {
   description = "Additional IAM users to add to the aws-auth configmap. See examples/eks_test_fixture/variables.tf for example format."
   type        = "list"
   default     = []
+}
+
+variable "map_users_count" {
+  description = "The count of roles in the map_users list."
+  type        = "string"
+  default     = 0
 }
 
 variable "subnets" {
@@ -71,12 +84,14 @@ variable "vpc_id" {
 }
 
 variable "worker_groups" {
-  description = "A list of maps defining worker group configurations. See workers_group_defaults for valid keys."
+  description = "A list of maps defining worker group configurations to be defined using AWS Launch Configurations. See workers_group_defaults for valid keys."
   type        = "list"
 
-  default = [{
-    "name" = "default"
-  }]
+  default = [
+    {
+      "name" = "default"
+    },
+  ]
 }
 
 variable "worker_group_count" {
@@ -86,6 +101,29 @@ variable "worker_group_count" {
 }
 
 variable "workers_group_defaults" {
+  description = "Override default values for target groups. See workers_group_defaults_defaults in locals.tf for valid keys."
+  type        = "map"
+  default     = {}
+}
+
+variable "worker_groups_launch_template" {
+  description = "A list of maps defining worker group configurations to be defined using AWS Launch Templates. See workers_group_defaults for valid keys."
+  type        = "list"
+
+  default = [
+    {
+      "name" = "default"
+    },
+  ]
+}
+
+variable "worker_group_launch_template_count" {
+  description = "The number of maps contained within the worker_groups_launch_template list."
+  type        = "string"
+  default     = "0"
+}
+
+variable "workers_group_launch_template_defaults" {
   description = "Override default values for target groups. See workers_group_defaults_defaults in locals.tf for valid keys."
   type        = "map"
   default     = {}
@@ -108,8 +146,14 @@ variable "worker_sg_ingress_from_port" {
 }
 
 variable "kubeconfig_aws_authenticator_command" {
-  description = "Command to use to to fetch AWS EKS credentials."
+  description = "Command to use to fetch AWS EKS credentials."
   default     = "aws-iam-authenticator"
+}
+
+variable "kubeconfig_aws_authenticator_command_args" {
+  description = "Default arguments passed to the authenticator command. Defaults to [token -i $cluster_name]."
+  type        = "list"
+  default     = []
 }
 
 variable "kubeconfig_aws_authenticator_additional_args" {
@@ -127,4 +171,30 @@ variable "kubeconfig_aws_authenticator_env_variables" {
 variable "kubeconfig_name" {
   description = "Override the default name used for items kubeconfig."
   default     = ""
+}
+
+variable "cluster_create_timeout" {
+  description = "Timeout value when creating the EKS cluster."
+  default     = "15m"
+}
+
+variable "cluster_delete_timeout" {
+  description = "Timeout value when deleting the EKS cluster."
+  default     = "15m"
+}
+
+variable "local_exec_interpreter" {
+  description = "Command to run for local-exec resources. Must be a shell-style interpreter. If you are on Windows Git Bash is a good choice."
+  type        = "list"
+  default     = ["/bin/sh", "-c"]
+}
+
+variable "cluster_create_security_group" {
+  description = "Whether to create a security group for the cluster or attach the cluster to `cluster_security_group_id`."
+  default     = true
+}
+
+variable "worker_create_security_group" {
+  description = "Whether to create a security group for the workers or attach the workers to `worker_security_group_id`."
+  default     = true
 }
