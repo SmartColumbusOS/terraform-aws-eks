@@ -12,6 +12,11 @@ variable "cluster_version" {
   default     = "1.10"
 }
 
+variable "ami_version" {
+  description = "Version for the EKS-optimized worker AMI."
+  default     = "*"
+}
+
 variable "config_output_path" {
   description = "Determines where config files are placed if using configure_kubectl_session and you want config files to land outside the current working directory. Should end in a forward slash / ."
   default     = "./"
