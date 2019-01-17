@@ -12,6 +12,11 @@ variable "cluster_version" {
   default     = "1.11"
 }
 
+variable "ami_version" {
+  description = "Version for the EKS-optimized worker AMI."
+  default     = "*"
+}
+
 variable "config_output_path" {
   description = "Where to save the Kubectl config file (if `write_kubeconfig = true`). Should end in a forward slash `/` ."
   default     = "./"
