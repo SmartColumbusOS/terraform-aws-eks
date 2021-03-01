@@ -182,7 +182,7 @@ resource "aws_launch_template" "workers_launch_template" {
       "public_ip",
       local.workers_group_launch_template_defaults["public_ip"],
     )
-    security_groups = [local.worker_security_group_id, var.worker_additional_security_group_ids, compact(
+    security_groups = flatten([local.worker_security_group_id, var.worker_additional_security_group_ids, compact(
       split(
         ",",
         lookup(
@@ -191,7 +191,7 @@ resource "aws_launch_template" "workers_launch_template" {
           local.workers_group_launch_template_defaults["additional_security_group_ids"],
         ),
       ),
-    )]
+    )])
   }
 
   iam_instance_profile {
